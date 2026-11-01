@@ -28,8 +28,9 @@ create table public.members (
   org_id uuid not null references public.organizations (id),
   user_id uuid not null,
   role text not null check (role in ('owner', 'staff')),
-  constraint members_org_user_unique unique (org_id, user_id)
+  constraint members_org_user_unique unique (user_id, org_id)
 );
+create index members_org_id_idx on public.members (org_id);
 
 create table public.appointments (
   id bigint generated always as identity primary key,

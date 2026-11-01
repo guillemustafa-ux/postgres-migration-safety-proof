@@ -27,6 +27,8 @@ export interface FileResult {
   ok: boolean;
   failedStatement?: string;
   error?: string;
+  /** What the error is about: `table.column` / `table` from the server's error fields, else the first quoted name. */
+  errorObject?: string;
   commitMs: number;
 }
 
@@ -104,6 +106,10 @@ export async function applyFile(client: pg.Client, path: string, hooks: RunnerHo
     if (inTransaction) await client.query('rollback');
     result.failedStatement = current;
     result.error = error instanceof Error ? error.message : String(error);
+    const fields = error as { table?: string; column?: string };
+    result.errorObject = fields.table
+      ? [fields.table, fields.column].filter(Boolean).join('.')
+      : /"([^"]+)"/.exec(result.error)?.[1];
   }
   return result;
 }
