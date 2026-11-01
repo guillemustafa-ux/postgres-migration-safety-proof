@@ -199,7 +199,7 @@ async function rlsProbe(db: pg.Client): Promise<NonNullable<Probes['rls']>> {
   const member = (await db.query<{ user: string; org: string }>(`select user_id::text as user, org_id::text as org from public.members order by id limit 1`))
     .rows[0];
   const visible = await rolledBack(db, async () => {
-    // Same switch as a PostgREST/Supabase request: the app role plus the caller's claims.
+    // A real role switch: the app role plus the caller's claims, both local to this transaction.
     await db.query('set local role client_role');
     await db.query(`select set_config('request.jwt.claims', $1, true)`, [JSON.stringify({ sub: member.user, role: 'authenticated' })]);
     const ids: Record<string, string[]> = {};

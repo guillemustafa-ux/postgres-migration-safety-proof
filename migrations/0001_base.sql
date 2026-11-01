@@ -1,5 +1,5 @@
 -- 0001: base schema of a small multi-tenant booking app, in the Supabase style.
--- Migrations run as the database owner role (`postgres` here and on Supabase); the app connects
+-- Migrations run as the role that owns the tables (`postgres` in the tests); the app connects
 -- as `client_role` and only ever sees its own organization's rows through RLS.
 
 do $$
@@ -10,7 +10,7 @@ begin
 end
 $$;
 
--- The caller's user id, from request claims the way PostgREST/Supabase pass them.
+-- The caller's user id, read from the `request.jwt.claims` setting of the current transaction.
 create function public.current_user_id() returns uuid
 language sql stable
 set search_path = ''
