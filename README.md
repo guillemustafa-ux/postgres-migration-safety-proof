@@ -154,7 +154,9 @@ exist and does not drop it. Retest: `npm run review -- <dir> --retest <fixed-dir
 
 The workflow ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs Ubuntu with a `postgres:16`
 service container, Windows against the runner's preinstalled PostgreSQL 17, and the seven footguns
-on Ubuntu. It has not run yet: this repository has not been pushed.
+on Ubuntu. The first run on GitHub Actions,
+[41320825923](https://github.com/guillemustafa-ux/postgres-migration-safety-proof/actions/runs/41320825923),
+was green on all nine jobs.
 
 ## Safe installation on a managed database
 
