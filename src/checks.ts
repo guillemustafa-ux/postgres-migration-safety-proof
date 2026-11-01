@@ -128,7 +128,8 @@ export const triggerProbe: Check = {
 };
 
 // ---------------------------------------------------------------------------------------------
-// (2) Foreign keys whose referencing columns are not the leading columns of any index.
+// (2) Foreign keys whose referencing columns are not the leading columns of any valid index.
+//     An index left invalid (for example by a failed CREATE INDEX CONCURRENTLY) does not count.
 
 export const fkIndexCheck: Check = {
   id: 'fk-without-index',
@@ -144,7 +145,7 @@ export const fkIndexCheck: Check = {
       where c.contype = 'f' and c.connamespace = 'public'::regnamespace
         and not exists (
           select 1 from pg_index i
-          where i.indrelid = c.conrelid and i.indpred is null
+          where i.indrelid = c.conrelid and i.indpred is null and i.indisvalid
             and (i.indkey::int2[])[0:cardinality(c.conkey) - 1] @> c.conkey)
       group by c.oid, c.conrelid
       order by 1, 2`);

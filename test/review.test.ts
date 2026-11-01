@@ -1,5 +1,5 @@
 import { execFile } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
@@ -162,6 +162,34 @@ describe('the review command', () => {
       expect(report).toContain('**Verdict: FAIL** - 8 finding(s) (Critical 1, High 5, Medium 2).');
       expect(report.match(/^\| \d+ \| `0\d{3}_/gm)).toHaveLength(8);
       expect(report.match(/\| not found in migrations\/release-fixed \|$/gm)).toHaveLength(8);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('an invalid index does not cover a foreign key', () => {
+  const serverUrl = inject('serverUrl');
+
+  test('(j) the fixed release plus a file that leaves the FK index invalid yields 1 FK-without-index finding on that file', async () => {
+    // A failed CREATE INDEX CONCURRENTLY leaves the index behind marked invalid. The fixture
+    // reproduces that state directly in pg_index (the review runs as a superuser on a scratch database).
+    const dir = mkdtempSync(join(tmpdir(), 'review-invalid-index-'));
+    try {
+      cpSync(FIXED, dir, { recursive: true });
+      writeFileSync(
+        join(dir, '0010_invalid_fk_index.sql'),
+        `-- 0010: the index behind appointments.assigned_member_id is left invalid, as after a failed CONCURRENTLY build.
+update pg_catalog.pg_index set indisvalid = false
+where indexrelid = 'public.appointments_assigned_member_id_idx'::regclass;
+`,
+      );
+      const result = await reviewRelease({ serverUrl, releaseDir: dir });
+      expect(result.release.status).toBe('complete');
+      expect(result.findings.map((f) => ({ check: f.check, file: f.file, object: f.object, severity: f.severity }))).toEqual([
+        { check: 'fk-without-index', file: '0010_invalid_fk_index.sql', object: 'appointments.assigned_member_id', severity: 'Medium' },
+      ]);
+      expect(result.verdict).toBe('CONDITIONAL PASS');
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

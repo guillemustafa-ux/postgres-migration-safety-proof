@@ -1,7 +1,7 @@
 {
   "no-fk-index-check": {
     "description": "The catalogue check for foreign keys without an index on the referencing column is removed.",
-    "expectedFailures": ["(a) ", "(d) ", "(i) "]
+    "expectedFailures": ["(a) ", "(d) ", "(i) ", "(j) "]
   },
   "no-rls-check": {
     "description": "The RLS check is removed: no look at relrowsecurity or at policies that are literally true, and no probe as client_role.",

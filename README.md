@@ -60,6 +60,14 @@ High 5, Medium 2). The retest against `release-fixed` found 0 findings, verdict 
 | 8 | `0009_client_name_required.sql` | `appointments.client_name` | High | 7 of 8 files stayed applied when 0009 failed (`column "client_name" ... contains null values`); since the release cannot be re-run (finding 1), recovery is a hand-written roll-forward or a restore of the pre-release backup |
 
 Milliseconds are from one run on a 300-row table: they are relative and vary between runs.
+"Held N ms" (finding 4) is the sum of the timed statements from the one that took the lock to the
+end of the file, plus the commit. It excludes the harness's own checkpoint queries, which run while
+the transaction is held open, so it understates the wall-clock time the lock was held during the
+review. It is a relative measure on a 300-row seed, not a forecast for a production table.
+
+"Runs as `postgres` (superuser)" (finding 6) is read from the server the review runs against (here
+the embedded server, where `postgres` is a superuser); it varies by host. On hosted services the
+migration role is usually not a superuser (not verified here).
 
 What the fixed release does instead: `CREATE TABLE IF NOT EXISTS` and `DROP POLICY IF EXISTS` before
 `CREATE POLICY`; the audit trigger branches on `TG_OP` and has `WHEN (pg_trigger_depth() < 1)`; the
@@ -98,7 +106,10 @@ Notes on the planted set, with the PostgreSQL docs ([docs/sources.md](docs/sourc
 
 The suite (`npm test`) asserts literal numbers and object names: 8 findings, each by file and
 object; 0 findings and PASS for the fixed release; 2 audit rows vs 1; the locks per statement; 150
-and 450 cross-tenant rows vs 0; the partial release state; the re-run failing at 0002.
+and 450 cross-tenant rows vs 0; the partial release state; the re-run failing at 0002. Test (j)
+adds one file to the fixed release that leaves the foreign key's index invalid (as a failed
+`CREATE INDEX CONCURRENTLY` does) and expects exactly one foreign-key-without-index finding on that
+file: an invalid index does not count as covering the key.
 
 Each file in [`footguns/`](footguns/) is a small patch that removes one check from the review.
 `npm run footgun <name>` applies it, runs the whole suite, reverts it, and prints `PASS` only when
@@ -107,7 +118,7 @@ other test stays green. Measured on 2026-11-01, all seven `PASS`:
 
 | Footgun | What is removed | Tests that fail |
 | --- | --- | --- |
-| `no-fk-index-check` | the foreign-key-without-index check | (a), (d), (i) |
+| `no-fk-index-check` | the foreign-key-without-index check | (a), (d), (i), (j) |
 | `no-rls-check` | the RLS check and its probe as `client_role` | (a), (f), (i) |
 | `no-lock-harness` | the `pg_locks` reads from the second connection | (a), (e), (i) |
 | `no-trigger-probe` | the one-UPDATE trigger probe | (a), (c), (i) |
@@ -127,7 +138,7 @@ key.
 
 ```bash
 npm ci
-npm test                                      # 14 tests: 9 for the review, 5 for the base schema, seed and splitter
+npm test                                      # 15 tests: 10 for the review, 5 for the base schema, seed and splitter
 npx tsc --noEmit
 npm run review -- migrations/release-broken   # writes REVIEW_REPORT.md, exits 1 on FAIL
 npm run review -- migrations/release-fixed    # exits 0 on PASS
@@ -225,7 +236,7 @@ src/harness.ts                    per-statement checkpoints, pg_locks from a sec
 src/checks.ts                     catalogue checks and probes
 src/review.ts                     the review: attribution per file, release state, re-run, verdict
 src/report.ts, src/cli.ts         REVIEW_REPORT.md and `npm run review`
-test/review.test.ts               scenarios (a)-(i)
+test/review.test.ts               scenarios (a)-(j)
 test/base.test.ts                 base schema, seed, RLS as client_role, statement splitter
 footguns/                         one patch per removed check + manifest of the tests it must fail
 scripts/footgun.mjs               apply, run, revert, strict verdict
