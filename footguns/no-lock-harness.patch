@@ -1,0 +1,24 @@
+diff --git a/src/harness.ts b/src/harness.ts
+index 1316486..35dc056 100644
+--- a/src/harness.ts
++++ b/src/harness.ts
+@@ -64,15 +64,10 @@ export async function snapshotTables(client: pg.Client): Promise<Snapshot> {
+ }
+ 
+ export async function observeLocks(observer: pg.Client, pid: number): Promise<LockObservation[]> {
+-  const { rows } = await observer.query<LockObservation>(
+-    `select distinct c.relname as table, l.mode
+-     from pg_locks l join pg_class c on c.oid = l.relation
+-     where l.pid = $1 and l.granted and l.locktype = 'relation'
+-       and c.relnamespace = 'public'::regnamespace and c.relkind in ('r', 'p')
+-     order by 1, 2`,
+-    [pid],
+-  );
+-  return rows;
++  // footgun: the harness never reads pg_locks, so no lock is ever observed
++  void observer;
++  void pid;
++  return [];
+ }
+ 
+ function diff(before: Snapshot, after: Snapshot): Pick<StatementRecord, 'rewrote' | 'newIndexes'> {

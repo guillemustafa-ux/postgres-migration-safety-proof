@@ -1,0 +1,17 @@
+diff --git a/src/review.ts b/src/review.ts
+index ca49347..e410d36 100644
+--- a/src/review.ts
++++ b/src/review.ts
+@@ -158,9 +158,10 @@ export function verdictOf(findings: Finding[]): Verdict {
+ 
+ /** What the ledger says was applied, compared with the release's file list. */
+ function releaseState(ledger: string[], releaseFiles: string[], files: FileRecord[]): ReleaseState {
+-  const applied = releaseFiles.filter((f) => ledger.includes(f));
+-  const notApplied = releaseFiles.filter((f) => !ledger.includes(f));
+   const failed = files.find((f) => !f.ok);
++  // footgun: a failed release is assumed to have rolled back as a whole; the ledger is not read
++  const applied = failed ? [] : releaseFiles;
++  const notApplied = failed ? releaseFiles : [];
+   return {
+     status: notApplied.length === 0 ? 'complete' : applied.length ? 'partial' : 'not-applied',
+     applied,

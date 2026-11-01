@@ -1,0 +1,10 @@
+diff --git a/src/checks.ts b/src/checks.ts
+index 78417d8..4eee1dc 100644
+--- a/src/checks.ts
++++ b/src/checks.ts
+@@ -345,4 +345,4 @@ export const uniqueCheck: Check = {
+ };
+ 
+ /** The checks that run after every file. The lock harness, the release state and the re-run check live in review.ts. */
+-export const CATALOGUE_CHECKS: Check[] = [triggerProbe, fkIndexCheck, rlsCheck, definerCheck, uniqueCheck];
++export const CATALOGUE_CHECKS: Check[] = [triggerProbe, fkIndexCheck, rlsCheck, uniqueCheck];

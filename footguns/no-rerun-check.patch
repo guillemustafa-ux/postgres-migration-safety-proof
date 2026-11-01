@@ -1,0 +1,15 @@
+diff --git a/src/review.ts b/src/review.ts
+index ca49347..3272be3 100644
+--- a/src/review.ts
++++ b/src/review.ts
+@@ -115,8 +115,8 @@ export async function reviewRelease(opts: { serverUrl: string; releaseDir: strin
+     findings.push(...blockingFindings(files, base));
+ 
+     await closeAll();
+-    probes.rerun = await rerunOnCopy(opts.serverUrl, db.name, releaseDir);
+-    if (probes.rerun.status === 'failed') {
++    // footgun: the release is never applied a second time
++    if (probes.rerun?.status === 'failed') {
+       findings.push({
+         check: 'not-rerunnable',
+         file: probes.rerun.file,

@@ -1,0 +1,30 @@
+{
+  "no-fk-index-check": {
+    "description": "The catalogue check for foreign keys without an index on the referencing column is removed.",
+    "expectedFailures": ["(a) ", "(d) ", "(i) "]
+  },
+  "no-rls-check": {
+    "description": "The RLS check is removed: no look at relrowsecurity or at policies that are literally true, and no probe as client_role.",
+    "expectedFailures": ["(a) ", "(f) ", "(i) "]
+  },
+  "no-lock-harness": {
+    "description": "The harness never reads pg_locks from the second connection, so no lock is ever observed.",
+    "expectedFailures": ["(a) ", "(e) ", "(i) "]
+  },
+  "no-trigger-probe": {
+    "description": "The trigger side-effect probe (one UPDATE, count the audit rows) is removed.",
+    "expectedFailures": ["(a) ", "(c) ", "(i) "]
+  },
+  "no-definer-check": {
+    "description": "The check for SECURITY DEFINER functions without a pinned search_path is removed.",
+    "expectedFailures": ["(a) ", "(i) "]
+  },
+  "no-rerun-check": {
+    "description": "The release is never applied a second time on a copy.",
+    "expectedFailures": ["(a) ", "(h) ", "(i) "]
+  },
+  "no-partial-release-report": {
+    "description": "The migration ledger is not read after a failure: a failed release is assumed to have rolled back as a whole.",
+    "expectedFailures": ["(g) "]
+  }
+}
