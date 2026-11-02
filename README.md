@@ -210,8 +210,8 @@ Quotes and URLs: [docs/sources.md](docs/sources.md).
 ## Limitations, stated plainly
 
 - **Synthetic schema and seed.** Two organizations, 300 appointments, one release of eight files.
-- **Run on PostgreSQL 16.15 only.** The workflow targets 16 on Ubuntu and 17 on Windows, but it has
-  not run yet; other versions are not verified.
+- **Measured locally on PostgreSQL 16.15.** The workflow also ran on 16 (Ubuntu) and 17 (Windows),
+  green on all nine jobs (see above); other versions are not verified.
 - **Lock durations are relative.** They are measured on a 300-row table on one machine; a real
   table makes the same locks last longer. No load is applied while the release runs.
 - **No backup or PITR verification.** The backup point is a checklist step; no `pg_dump` or
